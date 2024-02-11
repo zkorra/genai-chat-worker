@@ -1,0 +1,6 @@
+name = "genai-chat-worker"
+main = "src/index.ts"
+compatibility_date = "2022-05-03"
+
+[vars]
+GEMINI_CONFIG = { MODEL_NAME = "gemini-pro", MAX_OUTPUT_TOKENS = 100 }
