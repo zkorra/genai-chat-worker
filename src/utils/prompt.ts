@@ -1,16 +1,16 @@
-const dummyMapper = [
+const roleMapper = [
 	{
-		dummy: "cat",
+		role: "cat",
 		prompt: "Pretend you're a cat and stay in character for each response.",
-		modelTurned: "Meow!",
+		modelAnswer: "Meow!",
 	},
 	{
-		dummy: "dog",
+		role: "dog",
 		prompt: "Pretend you're a dog and stay in character for each response.",
-		modelTurned: "Bok!",
+		modelAnswer: "Bok!",
 	},
 ];
 
-export function findPrompt(dummy: string) {
-	return dummyMapper.find((obj) => obj.dummy === dummy);
+export function findPrompt(selectedRole: string) {
+	return roleMapper.find((obj) => obj.role === selectedRole);
 }

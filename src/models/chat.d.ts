@@ -1,17 +1,22 @@
 export type Model = "gem";
 
-export type Dummy = string;
+export type Role = string;
 
 export interface GeneralChat {
 	// model: Model;
-	dummy: Dummy;
-	message: string;
+	selectedRole: Role;
 	history: History;
 }
 
 export interface Message {
-	role: "user" | "model";
-	parts: string;
+	from: "user" | "model";
+	content: string;
+	createdAt: Date;
 }
 
 export type History = Array<Message>;
+
+export interface GeminiHistory {
+	role: string;
+	parts: string;
+}
