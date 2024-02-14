@@ -4,22 +4,29 @@ import type { History, GeminiHistory, GeneralChat } from "../models/chat";
 import { findPrompt } from "../utils/prompt";
 import { GeminiConfig } from "../env";
 
-export async function call(generalChat: GeneralChat, apiKey: string, config: GeminiConfig) {
-	const { MODEL_NAME, MAX_OUTPUT_TOKENS } = config;
+interface ChatInputGemini {
+	role: string;
+	history: History;
+	apiKey: string;
+	config: GeminiConfig;
+}
 
-	const found = findPrompt(generalChat.selectedRole);
+export async function call(input: ChatInputGemini) {
+	const { role, history, apiKey, config } = input;
+
+	const found = findPrompt(role);
 	if (found == null) {
 		return;
 	}
 
-	const history = [
+	const geminiHistory = [
 		{ role: "user", parts: found.prompt },
 		{ role: "model", parts: found.modelAnswer },
-		...convertHistoryToGeminiFormat(generalChat.history),
+		...convertHistoryToGeminiFormat(history),
 	];
-	console.debug("[gemini.call] history", history);
+	console.debug("[gemini.call] history", geminiHistory);
 
-	if (history.length <= 2) {
+	if (geminiHistory.length <= 2) {
 		return;
 	}
 
@@ -27,18 +34,18 @@ export async function call(generalChat: GeneralChat, apiKey: string, config: Gem
 	const genAI = new GoogleGenerativeAI(apiKey);
 
 	// For text-only input, use the gemini-pro model
-	const model = genAI.getGenerativeModel({ model: MODEL_NAME });
+	const model = genAI.getGenerativeModel({ model: config.MODEL_NAME });
 
-	const lastestMessage = history.pop();
+	const lastestMessage = geminiHistory.pop();
 
 	if (lastestMessage?.parts == null) {
 		return;
 	}
 
 	const chat = model.startChat({
-		history: history,
+		history: geminiHistory,
 		generationConfig: {
-			maxOutputTokens: MAX_OUTPUT_TOKENS,
+			maxOutputTokens: config.MAX_OUTPUT_TOKENS,
 		},
 	});
 

@@ -4,7 +4,7 @@ export type Role = string;
 
 export interface GeneralChat {
 	// model: Model;
-	selectedRole: Role;
+	role: Role;
 	history: History;
 }
 
