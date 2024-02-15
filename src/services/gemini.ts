@@ -1,64 +1,52 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import type { History, GeminiHistory, GeneralChat } from "../models/chat";
 
-import { findPrompt } from "../utils/prompt";
-import { GeminiConfig } from "../env";
+import { findRole } from "../utils/role";
+
+import type { GeminiConfig } from "../interfaces/env";
+import type { History } from "../interfaces/chat";
+import type { GeminiInputContent } from "../interfaces/gemini";
 
 interface ChatInputGemini {
 	role: string;
+	message: string;
 	history: History;
 	apiKey: string;
 	config: GeminiConfig;
 }
 
 export async function call(input: ChatInputGemini) {
-	const { role, history, apiKey, config } = input;
+	const { role, message, history, apiKey, config } = input;
 
-	const found = findPrompt(role);
-	if (found == null) {
-		return;
-	}
+	const foundRole = findRole(role)!;
 
-	const geminiHistory = [
-		{ role: "user", parts: found.prompt },
-		{ role: "model", parts: found.modelAnswer },
+	const contentList: Array<GeminiInputContent> = [
+		{ role: "user", parts: foundRole.prompt },
+		{ role: "model", parts: foundRole.modelAnswer },
 		...convertHistoryToGeminiFormat(history),
 	];
-	console.debug("[gemini.call] history", geminiHistory);
 
-	if (geminiHistory.length <= 2) {
-		return;
-	}
-
-	// Access your API key as an environment variable (see "Set up your API key" above)
-	const genAI = new GoogleGenerativeAI(apiKey);
-
-	// For text-only input, use the gemini-pro model
-	const model = genAI.getGenerativeModel({ model: config.MODEL_NAME });
-
-	const lastestMessage = geminiHistory.pop();
-
-	if (lastestMessage?.parts == null) {
-		return;
-	}
+	const model = new GoogleGenerativeAI(apiKey).getGenerativeModel({ model: config.MODEL_NAME });
+	console.info(`[gemini service] model ${config.MODEL_NAME} initiated`);
 
 	const chat = model.startChat({
-		history: geminiHistory,
+		history: contentList,
 		generationConfig: {
 			maxOutputTokens: config.MAX_OUTPUT_TOKENS,
 		},
 	});
+	console.debug("[gemini service] starting chat with history ->", contentList);
 
-	console.debug("[gemini.call] sending", lastestMessage.parts);
+	console.info("[gemini service] sending message ->", message);
+	const result = await chat.sendMessage(message);
 
-	const result = await chat.sendMessage(lastestMessage.parts);
-	const response = await result.response;
+	const responseText = result.response.text();
+	console.info("[gemini service] result ->", responseText);
 
-	return response.text();
+	return responseText;
 }
 
 function convertHistoryToGeminiFormat(history: History) {
-	let geminiFormatHistory: Array<GeminiHistory> = [];
+	let geminiFormatHistory: Array<GeminiInputContent> = [];
 	history.forEach((message) => {
 		geminiFormatHistory.push({ role: message.from, parts: message.content });
 	});
