@@ -24,7 +24,14 @@ app.onError((err, c) => {
 		);
 	}
 
-	return c.json({ error: "Internal Error" }, 500);
+	return c.json(
+		{
+			error: {
+				message: "Internal Server Error",
+			},
+		},
+		500
+	);
 });
 
 export default app;

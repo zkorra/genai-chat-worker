@@ -1,30 +1,28 @@
 import { Hono } from "hono";
-import type { Bindings } from "./interfaces/env";
 
 import * as gemini from "./services/gemini";
-import { ChatSession } from "./interfaces/chat";
-import { HTTPException } from "hono/http-exception";
 import { InputException } from "./utils/exception";
-
 import { validateChatSession } from "./utils/validation";
+
+import type { Bindings } from "./interfaces/env";
+import type { ChatSession } from "./interfaces/chat";
 
 const api = new Hono<{ Bindings: Bindings }>();
 
 api.post("/send", async (c) => {
-	const body: ChatSession = await c.req.json();
+	const chat: ChatSession = await c.req.json();
 	const startDateTime = Date.now();
 
-	validateChatSession(body);
+	validateChatSession(chat);
 
 	let response;
-	switch (body.model) {
+	switch (chat.model) {
 		case "gemini": {
 			response = await gemini.call({
-				role: body.role,
-				message: body.message,
-				history: body.history,
-				apiKey: c.env.GEMINI_API_KEY,
-				config: c.env.GEMINI_CONFIG,
+				role: chat.role,
+				message: chat.message,
+				history: chat.history,
+				env: c.env,
 			});
 			break;
 		}
@@ -33,22 +31,20 @@ api.post("/send", async (c) => {
 		}
 	}
 
-	if (response == null) {
-		throw new HTTPException(500);
-	}
+	chat.history.push(
+		{
+			from: "user",
+			content: chat.message,
+			createdAt: startDateTime.toString(),
+		},
+		{
+			from: "model",
+			content: response,
+			createdAt: Date.now().toString(),
+		}
+	);
 
-	body.history.push({
-		from: "user",
-		content: body.message,
-		createdAt: startDateTime.toString(),
-	});
-	body.history.push({
-		from: "model",
-		content: response,
-		createdAt: Date.now().toString(),
-	});
-
-	return c.json({ data: body.history }, 200);
+	return c.json({ history: chat.history }, 200);
 });
 
 export default api;

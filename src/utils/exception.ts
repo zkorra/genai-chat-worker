@@ -11,3 +11,9 @@ export class NotFoundException extends HTTPException {
 		super(404, { message: message });
 	}
 }
+
+export class ServerException extends HTTPException {
+	constructor(message: string) {
+		super(500, { message: message });
+	}
+}

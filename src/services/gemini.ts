@@ -2,20 +2,21 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 import { findRole } from "../utils/role";
 
-import type { GeminiConfig } from "../interfaces/env";
+import type { Bindings } from "../interfaces/env";
 import type { History } from "../interfaces/chat";
 import type { GeminiInputContent } from "../interfaces/gemini";
+import { ServerException } from "../utils/exception";
 
 interface ChatInputGemini {
 	role: string;
 	message: string;
 	history: History;
-	apiKey: string;
-	config: GeminiConfig;
+	env: Bindings;
 }
 
 export async function call(input: ChatInputGemini) {
-	const { role, message, history, apiKey, config } = input;
+	const { role, message, history, env } = input;
+	const { GEMINI_API_KEY, GEMINI_CONFIG: config } = env;
 
 	const foundRole = findRole(role)!;
 
@@ -25,7 +26,7 @@ export async function call(input: ChatInputGemini) {
 		...convertHistoryToGeminiFormat(history),
 	];
 
-	const model = new GoogleGenerativeAI(apiKey).getGenerativeModel({ model: config.MODEL_NAME });
+	const model = new GoogleGenerativeAI(GEMINI_API_KEY).getGenerativeModel({ model: config.MODEL_NAME });
 	console.info(`[gemini service] model ${config.MODEL_NAME} initiated`);
 
 	const chat = model.startChat({
@@ -37,7 +38,10 @@ export async function call(input: ChatInputGemini) {
 	console.debug("[gemini service] starting chat with history ->", contentList);
 
 	console.info("[gemini service] sending message ->", message);
-	const result = await chat.sendMessage(message);
+	const result = await chat.sendMessage(message).catch((err) => {
+		console.error("[gemini service]", err);
+		throw new ServerException("Error occurred while sending message to gemini api");
+	});
 
 	const responseText = result.response.text();
 	console.info("[gemini service] result ->", responseText);
