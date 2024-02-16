@@ -19,9 +19,7 @@ api.post("/send", async (c) => {
 	switch (chat.model) {
 		case "gemini": {
 			response = await gemini.call({
-				role: chat.role,
-				message: chat.message,
-				history: chat.history,
+				chatSession: chat,
 				env: c.env,
 			});
 			break;

@@ -3,33 +3,26 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { findRole } from "../utils/role";
 
 import type { Bindings } from "../interfaces/env";
-import type { History } from "../interfaces/chat";
+import type { ChatSession, History } from "../interfaces/chat";
 import type { GeminiInputContent } from "../interfaces/gemini";
 import { ServerException } from "../utils/exception";
 
-interface ChatInputGemini {
-	role: string;
-	message: string;
-	history: History;
-	env: Bindings;
-}
-
-export async function call(input: ChatInputGemini) {
-	const { role, message, history, env } = input;
+export async function call(input: { chatSession: ChatSession; env: Bindings }) {
+	const { chatSession, env } = input;
 	const { GEMINI_API_KEY, GEMINI_CONFIG: config } = env;
 
-	const foundRole = findRole(role)!;
+	const foundRole = findRole(chatSession.role)!;
 
 	const contentList: Array<GeminiInputContent> = [
 		{ role: "user", parts: foundRole.prompt },
 		{ role: "model", parts: foundRole.modelAnswer },
-		...convertHistoryToGeminiFormat(history),
+		...convertHistoryToGeminiFormat(chatSession.history),
 	];
 
 	const model = new GoogleGenerativeAI(GEMINI_API_KEY).getGenerativeModel({ model: config.MODEL_NAME });
 	console.info(`[gemini service] model ${config.MODEL_NAME} initiated`);
 
-	const chat = model.startChat({
+	const geminiChat = model.startChat({
 		history: contentList,
 		generationConfig: {
 			maxOutputTokens: config.MAX_OUTPUT_TOKENS,
@@ -37,8 +30,8 @@ export async function call(input: ChatInputGemini) {
 	});
 	console.debug("[gemini service] starting chat with history ->", contentList);
 
-	console.info("[gemini service] sending message ->", message);
-	const result = await chat.sendMessage(message).catch((err) => {
+	console.info("[gemini service] sending message ->", chatSession.message);
+	const result = await geminiChat.sendMessage(chatSession.message).catch((err) => {
 		console.error("[gemini service]", err);
 		throw new ServerException("Error occurred while sending message to gemini api");
 	});
