@@ -6,13 +6,13 @@ export interface ChatSession {
 	model: Model;
 	role: Role;
 	message: string;
-	history: History;
+	history: ChatHistory;
 }
 
-export interface Message {
+export type ChatHistory = Array<ChatMessage>;
+
+export interface ChatMessage {
 	from: "user" | "model";
 	content: string;
 	createdAt: string;
 }
-
-export type History = Array<Message>;

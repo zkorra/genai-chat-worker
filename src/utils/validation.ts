@@ -1,7 +1,7 @@
 import { InputException, NotFoundException } from "./exception";
 import { hasRole } from "./role";
 
-import type { ChatSession, History } from "../interfaces/chat";
+import type { ChatSession, ChatHistory } from "../interfaces/chat";
 
 export function validateChatSession(chatSession: ChatSession): void {
 	const { role, message, history } = chatSession;
@@ -23,7 +23,7 @@ export function validateChatSession(chatSession: ChatSession): void {
 	}
 }
 
-function validateMultiTurnChatHistory(history: History): void {
+function validateMultiTurnChatHistory(history: ChatHistory): void {
 	/*
 	 * request.history[].from must start with `user` and end with `model`
 	 */

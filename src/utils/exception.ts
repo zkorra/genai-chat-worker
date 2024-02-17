@@ -12,8 +12,7 @@ export class AppException extends HTTPException {
 
 	constructor(status: StatusCode, details: AppExceptionDetails) {
 		super(status);
-		this.details = details;
-		this.details.type = this.constructor.name;
+		this.details = { type: this.constructor.name, ...details };
 	}
 }
 

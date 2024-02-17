@@ -1,12 +1,5 @@
-import type { GeminiConfig } from "./env";
-import { History } from "./chat";
-import { InputContent } from "@google/generative-ai";
-
-interface ChatInputGemini {
-	role: string;
-	history: History;
-	apiKey: string;
-	config: GeminiConfig;
-}
+import { InputContent, ChatSession } from "@google/generative-ai";
 
 export interface GeminiInputContent extends InputContent {}
+
+export interface GeminiChatSession extends ChatSession {}

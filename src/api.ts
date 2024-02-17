@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 
-import * as gemini from "./services/gemini";
-import { InputException } from "./utils/exception";
+import { Gemini } from "./services/gemini";
+import { InputException, ServerException } from "./utils/exception";
 import { validateChatSession } from "./utils/validation";
 
 import type { Bindings } from "./interfaces/env";
@@ -10,29 +10,31 @@ import type { ChatSession } from "./interfaces/chat";
 const api = new Hono<{ Bindings: Bindings }>();
 
 api.post("/send", async (c) => {
-	const chat: ChatSession = await c.req.json();
+	const chatSession: ChatSession = await c.req.json();
 	const startDateTime = Date.now();
 
-	validateChatSession(chat);
+	validateChatSession(chatSession);
 
 	let response;
-	switch (chat.model) {
+	switch (chatSession.model) {
 		case "gemini": {
-			response = await gemini.call({
-				chatSession: chat,
-				env: c.env,
-			});
+			const gemini = new Gemini(chatSession, c.env.GEMINI_API_KEY, c.env.GEMINI_CONFIG);
+			response = await gemini.call();
 			break;
 		}
 		default: {
-			throw new InputException("Model is not valid");
+			throw new InputException("Selected model is not valid");
 		}
 	}
 
-	chat.history.push(
+	if (response == null || response.length === 0) {
+		throw new ServerException("Error occurred during execution", `Got empty response from ${chatSession.model} api`);
+	}
+
+	chatSession.history.push(
 		{
 			from: "user",
-			content: chat.message,
+			content: chatSession.message,
 			createdAt: startDateTime.toString(),
 		},
 		{
@@ -42,7 +44,7 @@ api.post("/send", async (c) => {
 		}
 	);
 
-	return c.json({ history: chat.history }, 200);
+	return c.json({ history: chatSession.history }, 200);
 });
 
 export default api;
