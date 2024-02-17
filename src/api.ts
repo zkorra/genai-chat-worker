@@ -2,14 +2,14 @@ import { Hono } from "hono";
 
 import { Gemini } from "./services/gemini";
 import { InputException, ServerException } from "./utils/exception";
-import { validateChatSession } from "./utils/validation";
+import { chatMiddlewareValidator, validateChatSession } from "./utils/validation";
 
 import type { Bindings } from "./interfaces/env";
 import type { ChatSession } from "./interfaces/chat";
 
 const api = new Hono<{ Bindings: Bindings }>();
 
-api.post("/send", async (c) => {
+api.post("/send", chatMiddlewareValidator, async (c) => {
 	const chatSession: ChatSession = await c.req.json();
 	const startDateTime = Date.now();
 
