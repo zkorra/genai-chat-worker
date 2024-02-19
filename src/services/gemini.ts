@@ -1,59 +1,63 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import type { History, GeminiHistory, GeneralChat } from "../models/chat";
 
-import { findPrompt } from "../utils/prompt";
-import { GeminiConfig } from "../env";
+import { findRole } from "../utils/role";
+import { ServerException } from "../utils/exception";
 
-export async function call(generalChat: GeneralChat, apiKey: string, config: GeminiConfig) {
-	const { MODEL_NAME, MAX_OUTPUT_TOKENS } = config;
+import type { GeminiConfig } from "../interfaces/env";
+import type { ChatSession, ChatHistory } from "../interfaces/chat";
+import type { GeminiChatSession, GeminiInputContent } from "../interfaces/gemini";
 
-	const found = findPrompt(generalChat.selectedRole);
-	if (found == null) {
-		return;
+export class Gemini {
+	private chatSession: ChatSession;
+	private apiKey: string;
+	private config: GeminiConfig;
+
+	constructor(chatSession: ChatSession, apiKey: string, config: GeminiConfig) {
+		this.chatSession = chatSession;
+		this.apiKey = apiKey;
+		this.config = config;
 	}
 
-	const history = [
-		{ role: "user", parts: found.prompt },
-		{ role: "model", parts: found.modelAnswer },
-		...convertHistoryToGeminiFormat(generalChat.history),
-	];
-	console.debug("[gemini.call] history", history);
+	async call(): Promise<string> {
+		const geminiChatSession = this.initiateGeminiChatSession();
 
-	if (history.length <= 2) {
-		return;
+		console.info("[gemini service] chat session initiated with history:", geminiChatSession.getHistory());
+
+		try {
+			console.info("[gemini service] sending message:", this.chatSession.message);
+			const result = await geminiChatSession.sendMessage(this.chatSession.message);
+			const responseText = result.response.text();
+			console.info("[gemini service] result:", responseText);
+
+			return responseText;
+		} catch (err) {
+			console.error("[gemini service]", err);
+			throw new ServerException("Error occurred while sending message to gemini api");
+		}
 	}
 
-	// Access your API key as an environment variable (see "Set up your API key" above)
-	const genAI = new GoogleGenerativeAI(apiKey);
+	initiateGeminiChatSession(): GeminiChatSession {
+		const foundRole = findRole(this.chatSession.role)!;
 
-	// For text-only input, use the gemini-pro model
-	const model = genAI.getGenerativeModel({ model: MODEL_NAME });
+		const contentList: Array<GeminiInputContent> = [
+			{ role: "user", parts: foundRole.prompt },
+			{ role: "model", parts: foundRole.modelAnswer },
+			...this.convertHistoryToGeminiFormat(this.chatSession.history),
+		];
 
-	const lastestMessage = history.pop();
+		const model = new GoogleGenerativeAI(this.apiKey).getGenerativeModel({ model: this.config.MODEL_NAME });
 
-	if (lastestMessage?.parts == null) {
-		return;
+		const geminiChatSession = model.startChat({
+			history: contentList,
+			generationConfig: {
+				maxOutputTokens: this.config.MAX_OUTPUT_TOKENS,
+			},
+		});
+
+		return geminiChatSession;
 	}
 
-	const chat = model.startChat({
-		history: history,
-		generationConfig: {
-			maxOutputTokens: MAX_OUTPUT_TOKENS,
-		},
-	});
-
-	console.debug("[gemini.call] sending", lastestMessage.parts);
-
-	const result = await chat.sendMessage(lastestMessage.parts);
-	const response = await result.response;
-
-	return response.text();
-}
-
-function convertHistoryToGeminiFormat(history: History) {
-	let geminiFormatHistory: Array<GeminiHistory> = [];
-	history.forEach((message) => {
-		geminiFormatHistory.push({ role: message.from, parts: message.content });
-	});
-	return geminiFormatHistory;
+	private convertHistoryToGeminiFormat(history: ChatHistory): Array<GeminiInputContent> {
+		return history.map((message) => ({ role: message.from, parts: message.content }));
+	}
 }

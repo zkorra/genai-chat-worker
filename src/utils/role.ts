@@ -11,6 +11,10 @@ const roleMapper = [
 	},
 ];
 
-export function findPrompt(selectedRole: string) {
-	return roleMapper.find((obj) => obj.role === selectedRole);
+export function findRole(role: string) {
+	return roleMapper.find((obj) => obj.role === role);
+}
+
+export function hasRole(role: string) {
+	return roleMapper.some((obj) => obj.role === role);
 }
