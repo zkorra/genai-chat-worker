@@ -11,7 +11,6 @@ const api = new Hono<{ Bindings: Bindings }>();
 
 api.post("/send", chatMiddlewareValidator, async (c) => {
 	const chatSession: ChatSession = await c.req.json();
-	const startDateTime = Date.now();
 
 	validateChatSession(chatSession);
 
@@ -31,20 +30,14 @@ api.post("/send", chatMiddlewareValidator, async (c) => {
 		throw new ServerException("Error occurred during execution", `Got empty response from ${chatSession.model} api`);
 	}
 
-	chatSession.history.push(
-		{
-			from: "user",
-			content: chatSession.message,
-			createdAt: startDateTime.toString(),
-		},
+	return c.json(
 		{
 			from: "model",
 			content: response,
-			createdAt: Date.now().toString(),
-		}
+			createdAt: new Date(Date.now()).toISOString(),
+		},
+		200
 	);
-
-	return c.json({ history: chatSession.history }, 200);
 });
 
 export default api;

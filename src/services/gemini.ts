@@ -21,7 +21,7 @@ export class Gemini {
 	async call(): Promise<string> {
 		const geminiChatSession = this.initiateGeminiChatSession();
 
-		console.info("[gemini service] chat session initiated with history:", geminiChatSession.getHistory());
+		console.info("[gemini service] chat session initiated with history:", await geminiChatSession.getHistory());
 
 		try {
 			console.info("[gemini service] sending message:", this.chatSession.message);
