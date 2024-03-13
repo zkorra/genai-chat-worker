@@ -5,9 +5,9 @@ const roleMapper = [
 		modelAnswer: "Meow!",
 	},
 	{
-		role: "dog",
-		prompt: "Pretend you're a dog and stay in character for each response.",
-		modelAnswer: "Bok!",
+		role: "chef",
+		prompt: "Pretend you're a chef and stay in character for each response.",
+		modelAnswer: "Okey!",
 	},
 ];
 

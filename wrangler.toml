@@ -3,4 +3,4 @@ main = "src/index.ts"
 compatibility_date = "2022-05-03"
 
 [vars]
-GEMINI_CONFIG = { MODEL_NAME = "gemini-pro", MAX_OUTPUT_TOKENS = 100 }
+GEMINI_CONFIG = { MODEL_NAME = "gemini-pro", MAX_OUTPUT_TOKENS = 100, TEMPERATURE = 0.9, TOP_P = 0.1, TOP_K = 16 }

@@ -45,13 +45,17 @@ export class Gemini {
 			...this.convertHistoryToGeminiFormat(this.chatSession.history),
 		];
 
-		const model = new GoogleGenerativeAI(this.apiKey).getGenerativeModel({ model: this.config.MODEL_NAME });
+		const generationConfig = {
+			maxOutputTokens: this.config.MAX_OUTPUT_TOKENS,
+			temperature: this.config.TEMPERATURE,
+			topP: this.config.TOP_P,
+			topK: this.config.TOP_K,
+		};
+
+		const model = new GoogleGenerativeAI(this.apiKey).getGenerativeModel({ model: this.config.MODEL_NAME, generationConfig });
 
 		const geminiChatSession = model.startChat({
 			history: contentList,
-			generationConfig: {
-				maxOutputTokens: this.config.MAX_OUTPUT_TOKENS,
-			},
 		});
 
 		return geminiChatSession;
