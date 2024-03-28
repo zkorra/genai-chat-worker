@@ -4,18 +4,24 @@ import { zValidator } from "@hono/zod-validator";
 import { InputException, NotFoundException } from "./exception";
 import { hasRole } from "./role";
 
-import type { ChatSession, ChatHistory } from "../interfaces/chat";
+import type { ChatSession, ChatHistory } from "../interface/chat";
 
 const chatSessionSchema = z.object({
-	model: z.string(),
-	role: z.string(),
-	message: z.string(),
-	history: z.array(z.object({ from: z.string(), content: z.string(), createdAt: z.string() })),
+	model: z.string().min(1).max(16),
+	role: z.string().min(1).max(16),
+	message: z.string().min(1).max(160),
+	history: z.array(
+		z.object({
+			from: z.string().min(1).max(16),
+			content: z.string().min(1).max(160),
+			createdAt: z.string().max(32),
+		})
+	),
 });
 
 export const chatMiddlewareValidator = zValidator("json", chatSessionSchema, (result, c) => {
 	if (!result.success) {
-		throw new InputException("Missing required field or invalid data type");
+		throw new InputException(`request.${result.error.issues[0].path[0]} is invalid`, result.error.issues[0].message);
 	}
 });
 
@@ -27,7 +33,7 @@ export function validateChatSession(chatSession: ChatSession): void {
 	}
 
 	if (!hasRole(role)) {
-		throw new NotFoundException(`Selected role ${role} doesn't exist on our side :(`);
+		throw new NotFoundException(`request.role ${role} doesn't exist`);
 	}
 }
 

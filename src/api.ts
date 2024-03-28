@@ -1,16 +1,16 @@
 import { Hono } from "hono";
 
-import { Gemini } from "./services/gemini";
-import { InputException, ServerException } from "./utils/exception";
-import { chatMiddlewareValidator, validateChatSession } from "./utils/validation";
+import { Gemini } from "./service/gemini";
+import { InputException, ServerException } from "./util/exception";
+import { chatMiddlewareValidator, validateChatSession } from "./util/validation";
 
-import type { Bindings } from "./interfaces/env";
-import type { ChatSession } from "./interfaces/chat";
+import type { Bindings } from "./interface/config/env";
+import type { ApiRequest } from "./interface/request";
 
 const api = new Hono<{ Bindings: Bindings }>();
 
 api.post("/send", chatMiddlewareValidator, async (c) => {
-	const chatSession: ChatSession = await c.req.json();
+	const chatSession: ApiRequest = await c.req.json();
 
 	validateChatSession(chatSession);
 

@@ -1,11 +1,11 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-import { findRole } from "../utils/role";
-import { ServerException } from "../utils/exception";
+import { findRole } from "../util/role";
+import { ServerException } from "../util/exception";
 
-import type { GeminiConfig } from "../interfaces/env";
-import type { ChatSession, ChatHistory } from "../interfaces/chat";
-import type { GeminiChatSession, GeminiInputContent } from "../interfaces/gemini";
+import type { GeminiConfig } from "../interface/config/env";
+import type { ChatSession, ChatHistory } from "../interface/chat";
+import type { GeminiChatSession, GeminiInputContent } from "../interface/client/gemini";
 
 export class Gemini {
 	private chatSession: ChatSession;

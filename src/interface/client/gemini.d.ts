@@ -1,4 +1,4 @@
-import { InputContent, ChatSession } from "@google/generative-ai";
+import type { InputContent, ChatSession } from "@google/generative-ai";
 
 export interface GeminiInputContent extends InputContent {}
 

@@ -8,6 +8,6 @@
 		"moduleResolution": "node",
 		"types": ["@cloudflare/workers-types"]
 	},
-	"include": ["src/*", "src/interfaces/env.d.ts"],
+	"include": ["src/*", "src/interface/config/env.d.ts"],
 	"exclude": ["node_modules", "dist"]
 }

@@ -1,18 +1,14 @@
-export type Model = "gemini" | "chatgpt";
-
-export type Role = string;
-
 export interface ChatSession {
-	model: Model;
-	role: Role;
+	model: string;
+	role: string;
 	message: string;
 	history: ChatHistory;
 }
-
-export type ChatHistory = Array<ChatMessage>;
 
 export interface ChatMessage {
 	from: "user" | "model";
 	content: string;
 	createdAt: string;
 }
+
+export type ChatHistory = Array<ChatMessage>;

@@ -5,7 +5,7 @@ import { cors } from "hono/cors";
 import { prettyJSON } from "hono/pretty-json";
 
 import api from "./api";
-import { AppException } from "./utils/exception";
+import { GenericException } from "./util/exception";
 
 const app = new Hono();
 
@@ -17,8 +17,10 @@ app.route("/api", api);
 app.notFound((c) => c.json({ error: "Not Found" }, 404));
 
 app.onError((err, c) => {
-	if (err instanceof AppException) {
-		return c.json({ error: err.details }, err.status);
+	if (err instanceof GenericException) {
+		const errorResponse = { error: { message: err.message, detail: err.detail } };
+
+		return c.json(errorResponse, err.status);
 	}
 
 	return c.json(
